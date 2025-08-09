@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>FPL Player Stats</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { font-size: 14px; }
+  </style>
+</head>
+<body>
+  <h1>Fantasy Premier League Player Stats</h1>
+  <table id="fplTable" class="display" style="width:100%">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Team</th>
+        <th>Position</th>
+        <th>Price</th>
+        <th>Goals</th>
+        <th>Assists</th>
+        <th>xG</th>
+        <th>xA</th>
+        <th>xGI</th>
+        <th>Minutes</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script>
+    const teamMap = {
+      1:"ARS", 2:"AVL", 3:"BUR", 4:"BOU", 5:"BRE",
+      6:"BHA", 7:"CHE", 8:"CRY", 9:"EVE", 10:"FUL",
+      11:"LEE", 12:"LIV", 13:"MCI", 14:"MUN", 15:"NEW",
+      16:"NFO", 17:"SUN", 18:"TOT", 19:"WHU", 20:"WOL"
+    };
+    const posMap = { 1:"GK", 2:"Def", 3:"Mid", 4:"Fwd" };
+
+    const proxyUrl = "https://api.allorigins.win/raw?url=";
+    const fplUrl = "https://fantasy.premierleague.com/api/bootstrap-static/";
+
+    fetch(proxyUrl + encodeURIComponent(fplUrl))
+      .then(response => response.json())
+      .then(data => {
+        const players = data.elements.map(p => ({
+          name: p.web_name,
+          team: teamMap[p.team_code] || p.team_code,
+          pos: posMap[p.element_type] || p.element_type,
+          price: (p.now_cost / 10).toFixed(1),
+          goals: p.goals_scored,
+          assists: p.assists,
+          xG: p.expected_goals.toFixed(2),
+          xA: p.expected_assists.toFixed(2),
+          xGI: p.expected_goal_involvements.toFixed(2),
+          minutes: p.minutes
+        }));
+
+        $('#fplTable').DataTable({
+          data: players,
+          columns: [
+            { data: 'name' },
+            { data: 'team' },
+            { data: 'pos' },
+            { data: 'price' },
+            { data: 'goals' },
+            { data: 'assists' },
+            { data: 'xG' },
+            { data: 'xA' },
+            { data: 'xGI' },
+            { data: 'minutes' }
+          ],
+          dom: 'Bfrtip',
+          buttons: ['csv'],
+          order: [[3, 'asc']]
+        });
+      })
+      .catch(err => console.error("Error fetching FPL data:", err));
+  </script>
+</body>
+</html>
